@@ -1,0 +1,92 @@
+version: 1
+disable_existing_loggers: False
+
+# Logging Level
+#   CRITICAL (50)
+#   ERROR (40)
+#   WARNING (30)
+#   INFO (20)
+#   DEBUG (10)
+#   NOTSET (0)
+
+# Formatter
+formatters:
+  uvicorn_critical:
+    "()": uvicorn.logging.DefaultFormatter
+    datefmt: "%Y-%m-%dT%H:%M:%S"
+    format: '[%(asctime)s.%(msecs)03d] %(levelprefix)s %(message)s'    
+    use_colors: false
+
+  uvicorn_access:
+    "()": uvicorn.logging.AccessFormatter
+    datefmt: "%Y-%m-%dT%H:%M:%S"
+    format: '[%(asctime)s.%(msecs)03d] %(levelprefix)s %(client_addr)s - %(request_line)s - %(status_code)s'    
+    use_colors: false
+
+  custom_critical:
+    "()": uvicorn.logging.DefaultFormatter
+    datefmt: "%Y-%m-%dT%H:%M:%S"
+    # format: '[%(asctime)s.%(msecs)03d] %(levelname)s [%(module)s|%(funcName)s|line:%(lineno)d] => %(message)s'
+    format: '[%(asctime)s.%(msecs)03d] %(levelname)s [%(filename)s:%(lineno)d (%(funcName)s)] %(message)s'
+    use_colors: false
+
+# Handler
+handlers:
+
+  uvicorn_critical_std:
+    formatter: uvicorn_critical
+    class: logging.StreamHandler
+    stream: ext://sys.stderr
+
+  uvicorn_critial_log:
+    formatter: uvicorn_critical
+    class: logging.handlers.RotatingFileHandler
+    filename: "./logs/uvicorn_sys.log"
+    maxBytes: 10485760
+    backupCount: 5
+    encoding: utf8
+    
+  uvicorn_access_std:
+    formatter: uvicorn_access
+    class: logging.StreamHandler
+    stream: ext://sys.stdout 
+    
+  uvicorn_access_log:
+    formatter: uvicorn_access
+    class: logging.handlers.RotatingFileHandler
+    filename: "./logs/uvicorn_access.log"
+    maxBytes: 10485760
+    backupCount: 5
+    encoding: utf8
+
+  custom_critical_std:  
+    formatter: custom_critical
+    class: logging.StreamHandler
+    stream: ext://sys.stderr
+
+  custom_critical_log:
+    formatter: custom_critical
+    class: logging.FileHandler
+    filename: "./logs/service_sys.log"  
+  
+loggers:
+  uvicorn.error:
+    level: 30 # WARNING
+    handlers:      
+      - uvicorn_critical_std
+      - uvicorn_critial_log
+    propagate: no
+    
+  uvicorn.access:
+    level: 20 # INFO
+    handlers:
+      - uvicorn_access_std
+      - uvicorn_access_log
+    propagate: no
+  
+  custom.error:
+    level: 30 # WARNING
+    handlers:
+      - custom_critical_std
+      - custom_critical_log
+    propagate: true
